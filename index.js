@@ -13,6 +13,8 @@ app.use(express.json()); //json convertion middleware
 
 const database_name = 'skillup';
 const users_collection_name = 'users';
+const class_collection_name = 'classes';
+
 
 const uri = `mongodb+srv://${process.env.MONGODB_USERNAME}:${process.env.MONGODB_PASSWORD}@cluster0.2jixdw6.mongodb.net/?retryWrites=true&w=majority`;
 const mongoClient = new MongoClient(uri, {
@@ -64,6 +66,23 @@ async function run() {
             const data = await mongoClient.db(database_name).collection(users_collection_name).findOne(query);
             console.log(data);
             response.send(data);
+        });
+
+        app.post('/user', async (request, response) => {
+            const user = request.body;
+            const data = await mongoClient.db(database_name).collection(users_collection_name).insertOne(user);
+            console.log(data);
+            response.send(data);
+        });
+
+        app.post('/addclass', async (request, response) => {
+            const classDetails = request.body;
+            console.log(classDetails);
+            if (classDetails) {
+                const data = await mongoClient.db(database_name).collection(class_collection_name).insertOne(classDetails);
+                console.log(data);
+                response.send(data);
+            }
         });
 
 
