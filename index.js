@@ -64,25 +64,58 @@ async function run() {
             const id = request.query.id;
             const query = { email: id };
             const data = await mongoClient.db(database_name).collection(users_collection_name).findOne(query);
-            console.log(data);
             response.send(data);
         });
 
         app.post('/user', async (request, response) => {
             const user = request.body;
             const data = await mongoClient.db(database_name).collection(users_collection_name).insertOne(user);
-            console.log(data);
             response.send(data);
         });
 
         app.post('/addclass', async (request, response) => {
             const classDetails = request.body;
-            console.log(classDetails);
             if (classDetails) {
                 const data = await mongoClient.db(database_name).collection(class_collection_name).insertOne(classDetails);
                 console.log(data);
                 response.send(data);
             }
+        });
+
+        app.patch('/updateclass/:id', async (request, response) => {
+            const i = request.params.id;
+            console.log(i);
+            const updateBody = request.body;
+            console.log(updateBody);
+            const query = { _id: new ObjectId(i) };
+            const update = {
+                $set: {
+                    title: updateBody.title,
+                    name: updateBody.name,
+                    email: updateBody.email,
+                    price: updateBody.price,
+                    description: updateBody.description,
+                    image: updateBody.image
+                }
+            };
+            const data = await mongoClient.db(database_name).collection(class_collection_name).updateOne(query, update);
+            console.log(data);
+            response.send(data);
+        });
+
+        app.get('/myclass', async (request, response) => {
+            const mail = request.query.id;
+            const query = { email: mail };
+            const data = await mongoClient.db(database_name).collection(class_collection_name).find(query).toArray();
+            response.send(data);
+        });
+
+        app.get('/classDetails/:id', async (request, response) => {
+            const i = request.params.id;
+            const query = { _id: new ObjectId(i) };
+            const data = await mongoClient.db(database_name).collection(class_collection_name).findOne(query);
+            console.log(data);
+            response.send(data);
         });
 
 
