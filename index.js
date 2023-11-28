@@ -77,16 +77,14 @@ async function run() {
             const classDetails = request.body;
             if (classDetails) {
                 const data = await mongoClient.db(database_name).collection(class_collection_name).insertOne(classDetails);
-                console.log(data);
                 response.send(data);
             }
         });
 
+
         app.patch('/updateclass/:id', async (request, response) => {
             const i = request.params.id;
-            console.log(i);
             const updateBody = request.body;
-            console.log(updateBody);
             const query = { _id: new ObjectId(i) };
             const update = {
                 $set: {
@@ -99,9 +97,10 @@ async function run() {
                 }
             };
             const data = await mongoClient.db(database_name).collection(class_collection_name).updateOne(query, update);
-            console.log(data);
             response.send(data);
         });
+
+
 
         app.get('/myclass', async (request, response) => {
             const mail = request.query.id;
@@ -114,6 +113,13 @@ async function run() {
             const i = request.params.id;
             const query = { _id: new ObjectId(i) };
             const data = await mongoClient.db(database_name).collection(class_collection_name).findOne(query);
+            response.send(data);
+        });
+
+        app.delete('/deleteclass/:id', async (request, response) => {
+            const i = request.params.id;
+            const query = { _id: new ObjectId(i) };
+            const data = await mongoClient.db(database_name).collection(class_collection_name).deleteOne(query);
             console.log(data);
             response.send(data);
         });
