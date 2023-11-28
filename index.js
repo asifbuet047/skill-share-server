@@ -14,6 +14,7 @@ app.use(express.json()); //json convertion middleware
 const database_name = 'skillup';
 const users_collection_name = 'users';
 const class_collection_name = 'classes';
+const request_collection_name = 'request';
 
 
 const uri = `mongodb+srv://${process.env.MONGODB_USERNAME}:${process.env.MONGODB_PASSWORD}@cluster0.2jixdw6.mongodb.net/?retryWrites=true&w=majority`;
@@ -120,11 +121,15 @@ async function run() {
             const i = request.params.id;
             const query = { _id: new ObjectId(i) };
             const data = await mongoClient.db(database_name).collection(class_collection_name).deleteOne(query);
-            console.log(data);
             response.send(data);
         });
 
-
+        app.post('/teachrequest', async (request, response) => {
+            const teach = request.body;
+            const data = await mongoClient.db(database_name).collection(request_collection_name).insertOne(teach);
+            console.log(data);
+            response.send(data);
+        });
 
     } finally {
 
