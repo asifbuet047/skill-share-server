@@ -74,6 +74,20 @@ async function run() {
             response.send(data);
         });
 
+        app.patch('/user', async (request, response) => {
+            const id = request.query.id;
+            const currentRole = request.body;
+            const query = { email: id };
+            const update = {
+                $set: {
+                    role: currentRole.role
+                }
+            };
+            const data = await mongoClient.db(database_name).collection(users_collection_name).updateOne(query, update);
+            console.log(data);
+            response.send(data);
+        });
+
         app.post('/addclass', async (request, response) => {
             const classDetails = request.body;
             if (classDetails) {
@@ -102,6 +116,11 @@ async function run() {
         });
 
 
+        app.get('/allclass', async (request, response) => {
+            const data = await mongoClient.db(database_name).collection(class_collection_name).find().toArray();
+            console.log(data);
+            response.send(data);
+        });
 
         app.get('/myclass', async (request, response) => {
             const mail = request.query.id;
@@ -177,7 +196,6 @@ async function run() {
                     }
                 };
                 const data = await mongoClient.db(database_name).collection(request_collection_name).updateOne(query, update);
-                console.log(data);
                 response.send(data);
             }
             if (details.status === 'rejected') {
@@ -188,7 +206,6 @@ async function run() {
                 };
 
                 const data = await mongoClient.db(database_name).collection(request_collection_name).updateOne(query, update);
-                console.log(data);
                 response.send(data);
             }
         });
