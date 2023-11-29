@@ -126,9 +126,71 @@ async function run() {
 
         app.post('/teachrequest', async (request, response) => {
             const teach = request.body;
-            const data = await mongoClient.db(database_name).collection(request_collection_name).insertOne(teach);
-            console.log(data);
-            response.send(data);
+            if (teach.times === 1) {
+                const data = await mongoClient.db(database_name).collection(request_collection_name).insertOne(teach);
+                response.send(data);
+            } else {
+                console.log(teach.times);
+                const query = { email: teach.email };
+                const update = {
+                    $set: {
+                        status: teach.status,
+                        title: teach.title,
+                        experience: teach.experience,
+                        category: teach.category,
+                        times: teach.times
+                    }
+                };
+                const data = await mongoClient.db(database_name).collection(request_collection_name).updateOne(query, update);
+                response.send(data);
+            }
+        });
+
+        app.get('/teachrequest', async (request, response) => {
+            const teachingmail = request.query.id;
+            const query = { email: teachingmail };
+            const data = await mongoClient.db(database_name).collection(request_collection_name).findOne(query);
+            if (data) {
+                response.send(data);
+            } else {
+                response.send({ student: true });
+            }
+        });
+
+        app.get('/allrequest', async (request, response) => {
+            const data = await mongoClient.db(database_name).collection(request_collection_name).find().toArray();
+            if (data) {
+                response.send(data);
+            } else {
+                response.send({ norequest: true });
+            }
+        });
+
+        app.patch('/editrequest', async (request, response) => {
+            const details = request.body;
+            console.log(details);
+            const query = { _id: new ObjectId(details.id) };
+            if (details.status === 'approved') {
+                const update = {
+                    $set: {
+                        status: 'approved'
+                    }
+                };
+                const data = await mongoClient.db(database_name).collection(request_collection_name).updateOne(query, update);
+                console.log(data);
+                response.send(data);
+            }
+            if (details.status === 'rejected') {
+                const update = {
+                    $set: {
+                        status: 'rejected'
+                    }
+                };
+
+                const data = await mongoClient.db(database_name).collection(request_collection_name).updateOne(query, update);
+                console.log(data);
+                response.send(data);
+            }
         });
 
     } finally {
