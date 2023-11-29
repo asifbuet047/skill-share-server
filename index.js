@@ -71,6 +71,7 @@ async function run() {
         app.post('/user', async (request, response) => {
             const user = request.body;
             const data = await mongoClient.db(database_name).collection(users_collection_name).insertOne(user);
+            console.log(data);
             response.send(data);
         });
 
@@ -117,8 +118,13 @@ async function run() {
 
 
         app.get('/allclass', async (request, response) => {
+            const query = { status: 'approved' };
+            const data = await mongoClient.db(database_name).collection(class_collection_name).find(query).toArray();
+            response.send(data);
+        });
+
+        app.get('/allclasses', async (request, response) => {
             const data = await mongoClient.db(database_name).collection(class_collection_name).find().toArray();
-            console.log(data);
             response.send(data);
         });
 
