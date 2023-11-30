@@ -117,15 +117,38 @@ async function run() {
         });
 
 
+        app.patch('/editclass', async (request, response) => {
+            const updateBody = request.body;
+            const query = { _id: new ObjectId(updateBody.id) };
+            const update = {
+                $set: {
+                    status: updateBody.status
+                }
+            };
+            const data = await mongoClient.db(database_name).collection(class_collection_name).updateOne(query, update);
+            console.log(data);
+            response.send(data);
+        });
+
+
         app.get('/allclass', async (request, response) => {
             const query = { status: 'approved' };
             const data = await mongoClient.db(database_name).collection(class_collection_name).find(query).toArray();
-            response.send(data);
+            if (data) {
+                response.send(data);
+
+            } else {
+                response.send({ noclass: true });
+            }
         });
 
         app.get('/allclasses', async (request, response) => {
             const data = await mongoClient.db(database_name).collection(class_collection_name).find().toArray();
-            response.send(data);
+            if (data) {
+                response.send(data);
+            } else {
+                response.send({ noclass: true });
+            }
         });
 
         app.get('/myclass', async (request, response) => {
