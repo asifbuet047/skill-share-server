@@ -306,6 +306,26 @@ async function run() {
             res.send(data);
         });
 
+        app.get('/totalusercount', async (request, response) => {
+            const data = await mongoClient.db(database_name).collection(users_collection_name).countDocuments();
+            response.send({ totalUser: data });
+        });
+
+        app.get('/totalclasscount', async (request, response) => {
+            const data = await mongoClient.db(database_name).collection(class_collection_name).countDocuments();
+            response.send({ totalClass: data });
+        });
+
+        app.get('/totalenrollcount', async (request, response) => {
+            const data = await mongoClient.db(database_name).collection(class_collection_name).find().toArray();
+            let total = 0;
+            data.map((value, index) => {
+                console.log(value.enroll);
+                total = total + value.enroll;
+            });
+            response.send({ total });
+        });
+
     } finally {
 
     }
