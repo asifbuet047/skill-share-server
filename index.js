@@ -77,6 +77,11 @@ async function run() {
             response.send(data);
         });
 
+        app.get('/alluser', async (request, response) => {
+            const data = await mongoClient.db(database_name).collection(users_collection_name).find().toArray();
+            response.send(data);
+        });
+
         app.post('/user', async (request, response) => {
             const user = request.body;
             const data = await mongoClient.db(database_name).collection(users_collection_name).insertOne(user);
