@@ -4,7 +4,9 @@ const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const jwt = require('jsonwebtoken');
+
 require('dotenv').config();
+
 
 const app = express();
 const JWT_SECRET = process.env.JWT_SECRECT_KEY;
@@ -15,6 +17,7 @@ const database_name = 'skillup';
 const users_collection_name = 'users';
 const class_collection_name = 'classes';
 const request_collection_name = 'request';
+const payment_collection_name = 'payment';
 
 
 const uri = `mongodb+srv://${process.env.MONGODB_USERNAME}:${process.env.MONGODB_PASSWORD}@cluster0.2jixdw6.mongodb.net/?retryWrites=true&w=majority`;
@@ -25,27 +28,32 @@ const mongoClient = new MongoClient(uri, {
         deprecationErrors: true,
     }
 });
-const verifyUser = (request, response, next) => {
-    const token = request.cookies?.ACCESS_TOKEN;
-    if (token) {
-        jwt.verify(token, JWT_SECRET, {
-            algorithms: 'HS512',
-            expiresIn: '1d',
-        }, (error, decoded) => {
-            if (decoded) {
-                response.user = decoded;
-                next();
-            }
-            if (error) {
-                response.status(401).send({ message: 'Unauthorized user' });
-            }
-        })
-    } else {
-        return response.status(401).send({ message: 'Unauthorized user' });
-    }
-}
+
 async function run() {
     try {
+
+        const verifyUser = (request, response, next) => {
+            if (!request.headers.authorization) {
+                return response.status(401).send({ message: 'unauthorized access' });
+            }
+            const token = request.headers.authorization.split(' ')[1];
+            if (token) {
+                jwt.verify(token, JWT_SECRET, {
+                    algorithms: 'HS512',
+                    expiresIn: '1d',
+                }, (error, decoded) => {
+                    if (decoded) {
+                        request.decoded = decoded;
+                        next();
+                    }
+                    if (error) {
+                        response.status(401).send({ message: 'Unauthorized access' });
+                    }
+                })
+            } else {
+                return response.status(401).send({ message: 'Unauthorized access' });
+            }
+        }
 
         app.post('/api/v1/token', (request, response) => {
             jwt.sign(request.body, JWT_SECRET, {
@@ -123,6 +131,19 @@ async function run() {
             const update = {
                 $set: {
                     status: updateBody.status
+                }
+            };
+            const data = await mongoClient.db(database_name).collection(class_collection_name).updateOne(query, update);
+            console.log(data);
+            response.send(data);
+        });
+
+        app.patch('/editclassenroll', async (request, response) => {
+            const updateBody = request.body;
+            const query = { _id: new ObjectId(updateBody.id) };
+            const update = {
+                $set: {
+                    enroll: updateBody.enroll
                 }
             };
             const data = await mongoClient.db(database_name).collection(class_collection_name).updateOne(query, update);
@@ -237,6 +258,36 @@ async function run() {
                 const data = await mongoClient.db(database_name).collection(request_collection_name).updateOne(query, update);
                 response.send(data);
             }
+        });
+
+
+        app.post('/create_payment_intent', verifyUser, async (request, response) => {
+            const { price } = request.body;
+            const amount = parseInt(price * 100);
+            const stripe = require('stripe')(process.env.STRIPE_SECRECT_KEY);
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount: amount,
+                currency: 'usd',
+                payment_method_types: ['card']
+            });
+            response.send({
+                clientSecret: paymentIntent.client_secret
+            });
+        });
+
+        app.post('/payment', async (request, response) => {
+            const info = request.body;
+            const data = await mongoClient.db(database_name).collection(payment_collection_name).insertOne(info);
+            console.log(data);
+            response.send(data);
+        });
+
+        app.get('/paymentinfo', async (request, response) => {
+            const mail = request.query.id;
+            const query = { email: mail };
+            const data = await mongoClient.db(database_name).collection(payment_collection_name).find(query).toArray();
+            console.log(data);
+            response.send(data);
         });
 
     } finally {
