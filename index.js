@@ -18,6 +18,7 @@ const users_collection_name = 'users';
 const class_collection_name = 'classes';
 const request_collection_name = 'request';
 const payment_collection_name = 'payment';
+const partners_collection_name = 'partners';
 
 
 const uri = `mongodb+srv://${process.env.MONGODB_USERNAME}:${process.env.MONGODB_PASSWORD}@cluster0.2jixdw6.mongodb.net/?retryWrites=true&w=majority`;
@@ -172,6 +173,16 @@ async function run() {
             }
         });
 
+        app.get('/allpopularclass', async (request, response) => {
+            const sort = { enroll: -1 }
+            const data = await mongoClient.db(database_name).collection(class_collection_name).find().sort(sort).limit(4).toArray();
+            if (data) {
+                response.send(data);
+            } else {
+                response.send({ noclass: true });
+            }
+        });
+
         app.get('/myclass', async (request, response) => {
             const mail = request.query.id;
             const query = { email: mail };
@@ -278,7 +289,6 @@ async function run() {
         app.post('/payment', async (request, response) => {
             const info = request.body;
             const data = await mongoClient.db(database_name).collection(payment_collection_name).insertOne(info);
-            console.log(data);
             response.send(data);
         });
 
@@ -286,8 +296,14 @@ async function run() {
             const mail = request.query.id;
             const query = { email: mail };
             const data = await mongoClient.db(database_name).collection(payment_collection_name).find(query).toArray();
-            console.log(data);
             response.send(data);
+        });
+
+
+        app.get('/partners', async (req, res) => {
+            const data = await mongoClient.db(database_name).collection(partners_collection_name).find().toArray();
+            console.log(data);
+            res.send(data);
         });
 
     } finally {
