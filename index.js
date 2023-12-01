@@ -19,6 +19,7 @@ const class_collection_name = 'classes';
 const request_collection_name = 'request';
 const payment_collection_name = 'payment';
 const partners_collection_name = 'partners';
+const assignments_collection_name = 'assignments';
 
 
 const uri = `mongodb+srv://${process.env.MONGODB_USERNAME}:${process.env.MONGODB_PASSWORD}@cluster0.2jixdw6.mongodb.net/?retryWrites=true&w=majority`;
@@ -70,26 +71,31 @@ async function run() {
         });
 
 
-        app.get('/user', async (request, response) => {
+        app.get('/user', verifyUser, async (request, response) => {
             const id = request.query.id;
             const query = { email: id };
             const data = await mongoClient.db(database_name).collection(users_collection_name).findOne(query);
             response.send(data);
         });
 
-        app.get('/alluser', async (request, response) => {
+        app.get('/alluser', verifyUser, async (request, response) => {
             const data = await mongoClient.db(database_name).collection(users_collection_name).find().toArray();
             response.send(data);
         });
 
-        app.post('/user', async (request, response) => {
+        app.post('/user', verifyUser, async (request, response) => {
             const user = request.body;
-            const data = await mongoClient.db(database_name).collection(users_collection_name).insertOne(user);
-            console.log(data);
-            response.send(data);
+            const query = { email: user.email };
+            const exitingUser = await mongoClient.db(database_name).collection(users_collection_name).findOne(query);
+            if (exitingUser) {
+                response.send({ status: 'exiting' });
+            } else {
+                const data = await mongoClient.db(database_name).collection(users_collection_name).insertOne(user);
+                response.send(data);
+            }
         });
 
-        app.patch('/user', async (request, response) => {
+        app.patch('/user', verifyUser, async (request, response) => {
             const id = request.query.id;
             const currentRole = request.body;
             const query = { email: id };
@@ -99,11 +105,10 @@ async function run() {
                 }
             };
             const data = await mongoClient.db(database_name).collection(users_collection_name).updateOne(query, update);
-            console.log(data);
             response.send(data);
         });
 
-        app.post('/addclass', async (request, response) => {
+        app.post('/addclass', verifyUser, async (request, response) => {
             const classDetails = request.body;
             if (classDetails) {
                 const data = await mongoClient.db(database_name).collection(class_collection_name).insertOne(classDetails);
@@ -112,7 +117,7 @@ async function run() {
         });
 
 
-        app.patch('/updateclass/:id', async (request, response) => {
+        app.patch('/updateclass/:id', verifyUser, async (request, response) => {
             const i = request.params.id;
             const updateBody = request.body;
             const query = { _id: new ObjectId(i) };
@@ -131,7 +136,7 @@ async function run() {
         });
 
 
-        app.patch('/editclass', async (request, response) => {
+        app.patch('/editclass', verifyUser, async (request, response) => {
             const updateBody = request.body;
             const query = { _id: new ObjectId(updateBody.id) };
             const update = {
@@ -140,11 +145,10 @@ async function run() {
                 }
             };
             const data = await mongoClient.db(database_name).collection(class_collection_name).updateOne(query, update);
-            console.log(data);
             response.send(data);
         });
 
-        app.patch('/editclassenroll', async (request, response) => {
+        app.patch('/editclassenroll', verifyUser, async (request, response) => {
             const updateBody = request.body;
             const query = { _id: new ObjectId(updateBody.id) };
             const update = {
@@ -153,7 +157,6 @@ async function run() {
                 }
             };
             const data = await mongoClient.db(database_name).collection(class_collection_name).updateOne(query, update);
-            console.log(data);
             response.send(data);
         });
 
@@ -163,7 +166,6 @@ async function run() {
             const data = await mongoClient.db(database_name).collection(class_collection_name).find(query).toArray();
             if (data) {
                 response.send(data);
-
             } else {
                 response.send({ noclass: true });
             }
@@ -188,34 +190,33 @@ async function run() {
             }
         });
 
-        app.get('/myclass', async (request, response) => {
+        app.get('/myclass', verifyUser, async (request, response) => {
             const mail = request.query.id;
             const query = { email: mail };
             const data = await mongoClient.db(database_name).collection(class_collection_name).find(query).toArray();
             response.send(data);
         });
 
-        app.get('/classDetails/:id', async (request, response) => {
+        app.get('/classDetails/:id', verifyUser, async (request, response) => {
             const i = request.params.id;
             const query = { _id: new ObjectId(i) };
             const data = await mongoClient.db(database_name).collection(class_collection_name).findOne(query);
             response.send(data);
         });
 
-        app.delete('/deleteclass/:id', async (request, response) => {
+        app.delete('/deleteclass/:id', verifyUser, async (request, response) => {
             const i = request.params.id;
             const query = { _id: new ObjectId(i) };
             const data = await mongoClient.db(database_name).collection(class_collection_name).deleteOne(query);
             response.send(data);
         });
 
-        app.post('/teachrequest', async (request, response) => {
+        app.post('/teachrequest', verifyUser, async (request, response) => {
             const teach = request.body;
             if (teach.times === 1) {
                 const data = await mongoClient.db(database_name).collection(request_collection_name).insertOne(teach);
                 response.send(data);
             } else {
-                console.log(teach.times);
                 const query = { email: teach.email };
                 const update = {
                     $set: {
@@ -231,7 +232,7 @@ async function run() {
             }
         });
 
-        app.get('/teachrequest', async (request, response) => {
+        app.get('/teachrequest', verifyUser, async (request, response) => {
             const teachingmail = request.query.id;
             const query = { email: teachingmail };
             const data = await mongoClient.db(database_name).collection(request_collection_name).findOne(query);
@@ -242,7 +243,7 @@ async function run() {
             }
         });
 
-        app.get('/allrequest', async (request, response) => {
+        app.get('/allrequest', verifyUser, async (request, response) => {
             const data = await mongoClient.db(database_name).collection(request_collection_name).find().toArray();
             if (data) {
                 response.send(data);
@@ -251,9 +252,8 @@ async function run() {
             }
         });
 
-        app.patch('/editrequest', async (request, response) => {
+        app.patch('/editrequest', verifyUser, async (request, response) => {
             const details = request.body;
-            console.log(details);
             const query = { _id: new ObjectId(details.id) };
             if (details.status === 'approved') {
                 const update = {
@@ -291,13 +291,13 @@ async function run() {
             });
         });
 
-        app.post('/payment', async (request, response) => {
+        app.post('/payment', verifyUser, async (request, response) => {
             const info = request.body;
             const data = await mongoClient.db(database_name).collection(payment_collection_name).insertOne(info);
             response.send(data);
         });
 
-        app.get('/paymentinfo', async (request, response) => {
+        app.get('/paymentinfo', verifyUser, async (request, response) => {
             const mail = request.query.id;
             const query = { email: mail };
             const data = await mongoClient.db(database_name).collection(payment_collection_name).find(query).toArray();
@@ -307,13 +307,19 @@ async function run() {
 
         app.get('/partners', async (req, res) => {
             const data = await mongoClient.db(database_name).collection(partners_collection_name).find().toArray();
-            console.log(data);
             res.send(data);
         });
 
         app.get('/totalusercount', async (request, response) => {
             const data = await mongoClient.db(database_name).collection(users_collection_name).countDocuments();
             response.send({ totalUser: data });
+        });
+
+        app.get('/userscount', async (request, response) => {
+            const id = request.query.id;
+            const query = { email: id };
+            const data = await mongoClient.db(database_name).collection(class_collection_name).find(query).project({ enroll: 1 }).toArray();
+            response.send(data);
         });
 
         app.get('/totalclasscount', async (request, response) => {
@@ -325,10 +331,32 @@ async function run() {
             const data = await mongoClient.db(database_name).collection(class_collection_name).find().toArray();
             let total = 0;
             data.map((value, index) => {
-                console.log(value.enroll);
                 total = total + value.enroll;
             });
             response.send({ total });
+        });
+
+        app.get('/totalassignmentcount', verifyUser, async (request, response) => {
+            const id = request.query.id;
+            const query = { class_id: id };
+            const data = await mongoClient.db(database_name).collection(assignments_collection_name).countDocuments();
+            response.send({ total_assignment: data });
+        });
+
+        app.get('/assignments', verifyUser, async (request, response) => {
+            const id = request.query.id;
+            const query = { class_id: id };
+            const data = await mongoClient.db(database_name).collection(assignments_collection_name).find(query).toArray();
+            response.send(data);
+        });
+
+        app.post('/submitassignment', verifyUser, async (request, response) => {
+            const id = request.query.id;
+            const query = { class_id: id };
+            const assignment = request.body;
+            const data = await mongoClient.db(database_name).collection(assignments_collection_name).insertOne(assignment);
+            console.log(data);
+            response.send(data);
         });
 
     } finally {
